@@ -31,7 +31,7 @@ int emu_run(int argc, char **argv){
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();//used for fonts
 
-    cpu_init();//start cpu 
+    cpu_init();//initialize cpu 
 
     ctx.running = true;//init the values for context
     ctx.paused = false;

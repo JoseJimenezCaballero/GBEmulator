@@ -170,3 +170,14 @@ bool cart_load(char *cart) {
 
     return true;
 }
+
+//Looks for rom data array in that particular address and returns it
+u8 cart_read(u16 address){
+    //for now just ROM ONLY type
+
+    return ctx.rom_data[address];
+}
+
+u8 cart_write(u16 address, u8 value){
+    NO_IMPL
+}
