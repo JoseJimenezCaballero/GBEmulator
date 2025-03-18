@@ -26,3 +26,5 @@ void delay(u32 ms);
 #define FLAG_N 0x40
 #define FLAG_H 0x20
 #define FLAG_C 0x10
+
+typedef int8_t s8; //signed integer
