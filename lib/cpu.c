@@ -10,7 +10,7 @@ void cpu_init(){
 }
 
 static void fetch_instruction(){
-    ctx.opcode = bus_read(ctx.regs.pc); //read from rom data at address pc then increment pc by one
+    ctx.opcode = bus_read(ctx.regs.pc++); //read from rom data at address pc then increment pc by one
     //now that we have instructions we need to fetch the fucntion that will execute this and return it
 }
 static void execute(u16 opcode){
@@ -31,8 +31,9 @@ static void execute(u16 opcode){
 //every step will check if the cpu is halted if not it will fetch instruction and execute
 bool cpu_step(){
     if(!ctx.halted){
+        u16 pc = ctx.regs.pc;
         fetch_instruction();
-        printf("Executing Instruction: %02X      Num of cycles: %016X\nRegisters: A:%02X   B:%02X   C:%02X   D:%02X   E:%02X   F:%02X   H:%02X   L:%02X   PC: %04X\n", ctx.opcode, ctx.cycles, ctx.regs.a, ctx.regs.b,ctx.regs.c,ctx.regs.d,ctx.regs.e,ctx.regs.f,ctx.regs.h,ctx.regs.l, ctx.regs.pc);
+        printf("Executing Instruction: %02X      Num of cycles: %016X\nRegisters: A:%02X   B:%02X   C:%02X   D:%02X   E:%02X   F:%02X   H:%02X   L:%02X   PC: %04X\n\n", ctx.opcode, ctx.cycles, ctx.regs.a, ctx.regs.b,ctx.regs.c,ctx.regs.d,ctx.regs.e,ctx.regs.f,ctx.regs.h,ctx.regs.l, pc);
         execute(ctx.opcode);
     }
     return true;

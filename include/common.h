@@ -21,3 +21,8 @@ typedef uint64_t u64;
 void delay(u32 ms);
 
 #define NO_IMPL { fprintf(stderr, "NOT YET IMPLEMENTED\n"); exit(-5);} //macro for stuff that hasnt been implemented yet
+
+#define FLAG_Z 0x80
+#define FLAG_N 0x40
+#define FLAG_H 0x20
+#define FLAG_C 0x10
