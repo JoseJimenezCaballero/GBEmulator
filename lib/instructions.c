@@ -1,6 +1,7 @@
 #include <instructions.h>
 #include <cpu.h>
 #include <bus.h>
+#include <stack.h>
 
 extern cpu_context ctx;
 
@@ -18,12 +19,19 @@ void init_instruction_table(){
     instruction_table[0x21] = instr_ld_hl_d16;
     instruction_table[0x28] = instr_jr_z_r8;
 
+    instruction_table[0x3E] = ld_a_d8;
+
     instruction_table[0x6F] = instr_ld_la;
 
     instruction_table[0xAF] = instr_xor_a;
 
     instruction_table[0xC3] = instr_jp_a16;
+    instruction_table[0xCD] = insr_call_a16;
 
+    instruction_table[0xE0] = instr_ldh_a8_a;
+    instruction_table[0xEA] = instr_ld_a16_a;
+
+    instruction_table[0xF3] = instr_di;
     instruction_table[0xFA] = instr_ld_a_a16;
     instruction_table[0xFE] = instr_cp_d8;
 }
@@ -96,6 +104,14 @@ void instr_ld_hl_d16(){
 
 }
 
+//3E
+void ld_a_d8(){
+    u8 value = bus_read(ctx.regs.pc++);
+    ctx.regs.a = value;
+    ctx.cycles += 8;
+}
+
+
 //6F
 void instr_ld_la(){
     ctx.regs.l = ctx.regs.a;
@@ -122,6 +138,44 @@ void instr_jp_a16(){
     ctx.regs.pc = addr;
     ctx.cycles += 16;
 
+}
+
+//CD
+void insr_call_a16(){
+    u8 low = bus_read(ctx.regs.pc++);
+    u8 high = bus_read(ctx.regs.pc++);
+    u16 address = (high << 8) | low;//this is the address we want to go to do the subroutine
+
+    u16 return_address = ctx.regs.pc; //collect the current pc to return to
+    stack_push16(return_address);//push return addy to the stack so we know where to come back
+
+    ctx.regs.pc = address;//set the pc to the new address and go off in the distance
+    ctx.cycles += 24;
+}
+
+
+//E0
+void instr_ldh_a8_a(){
+    u8 offset = bus_read(ctx.regs.pc++);//get offset
+    u16 address = 0xFF00 + offset;//offset by this much
+    bus_write(address, ctx.regs.a);
+    ctx.cycles += 12;
+}
+
+//EA
+void instr_ld_a16_a(){//load onto 16 bit address whats in A
+    u8 low = bus_read(ctx.regs.pc++);
+    u8 high = bus_read(ctx.regs.pc++);
+    u16 address = (high << 8) | low;
+
+    bus_write(address, ctx.regs.a);
+    ctx.cycles += 16;
+}
+
+//F3
+void instr_di(){
+    ctx.ime = false;
+    ctx.cycles += 4;
 }
 
 //FA

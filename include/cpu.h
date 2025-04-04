@@ -27,6 +27,7 @@ typedef struct { //contain all registers in a seperate struct for organization
 
 } cpu_registers;
 
+cpu_registers *cpu_get_regs();
 
 typedef struct {
     cpu_registers regs;

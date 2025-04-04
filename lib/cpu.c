@@ -6,7 +6,12 @@ cpu_context ctx = {0};
 
 void cpu_init(){
     ctx.regs.pc = 0x100; //make the pc the entry point
+    ctx.regs.sp = 0xFFFE; //make stack point to the top of HRAM(fastest for cpu)
     init_instruction_table();
+}
+
+cpu_registers *cpu_get_regs(){ //getter to get the regs which we will use here and there
+    return &ctx.regs;
 }
 
 static void fetch_instruction(){
