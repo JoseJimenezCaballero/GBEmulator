@@ -6,6 +6,7 @@
 extern cpu_context ctx;
 
 InstructionFunc instruction_table[256] = {0};//declare the table 
+InstructionFuncCB instruction_tableCB[256] = {0};//declare the CB table 
 
 //This function will initialize the table and add the opcodes to the correct address
 void init_instruction_table(){
@@ -21,22 +22,30 @@ void init_instruction_table(){
 
     instruction_table[0x3E] = ld_a_d8;
 
+    instruction_table[0x47] = instr_ld_b_a;
+
     instruction_table[0x6F] = instr_ld_la;
 
     instruction_table[0xAF] = instr_xor_a;
 
     instruction_table[0xC3] = instr_jp_a16;
+    instruction_table[0xCB] = instr_prefix_cb;
     instruction_table[0xCD] = insr_call_a16;
 
     instruction_table[0xE0] = instr_ldh_a8_a;
     instruction_table[0xEA] = instr_ld_a16_a;
-
+    instruction_table[0xF0] = instr_ldh_a_a8;
     instruction_table[0xF3] = instr_di;
     instruction_table[0xFA] = instr_ld_a_a16;
     instruction_table[0xFE] = instr_cp_d8;
 }
 
-//actual opcode function definitions below:
+//Just like above but for CB opcodes
+void init_instruction_tableCB(){
+    instruction_tableCB[0x87] = cb_instr_res_0_a;
+}
+
+//actual regular opcode function definitions below:
 
 
 //00
@@ -111,6 +120,11 @@ void ld_a_d8(){
     ctx.cycles += 8;
 }
 
+//47
+void instr_ld_b_a(){
+    ctx.regs.b = ctx.regs.a;
+    ctx.cycles += 4;
+}
 
 //6F
 void instr_ld_la(){
@@ -138,6 +152,19 @@ void instr_jp_a16(){
     ctx.regs.pc = addr;
     ctx.cycles += 16;
 
+}
+
+//CB
+void instr_prefix_cb(){//calls whatever CB opcode is at the next pc
+    u8 cb_opcode = bus_read(ctx.regs.pc++); //pc contained the CB opcode so we take it and increment
+    //if we find the instruction then execute it
+    if(instruction_tableCB[cb_opcode]){
+        printf("***Executing CB opcode %02X\n\n", cb_opcode);
+        instruction_tableCB[cb_opcode]();//then call the actual function
+    }
+    else{
+        printf("*********Instruction %02X not yet implemented FOR CB********\n\n", cb_opcode);
+    }
 }
 
 //CD
@@ -172,6 +199,14 @@ void instr_ld_a16_a(){//load onto 16 bit address whats in A
     ctx.cycles += 16;
 }
 
+//F0
+void instr_ldh_a_a8(){
+    u8 offset = bus_read(ctx.regs.pc++);
+    u16 address = 0xFF00 + offset;
+    ctx.regs.a = bus_read(address);
+    ctx.cycles += 12;
+}
+
 //F3
 void instr_di(){
     ctx.ime = false;
@@ -204,5 +239,13 @@ void instr_cp_d8(){//compare if a is ==, <, or > than the immediate value and up
     if(ctx.regs.a < value){//C flag set if less for carry
         ctx.regs.f |= FLAG_C;
     }
+    ctx.cycles += 8;
+}
+
+//CB instruction implementations go here:
+
+//87
+void cb_instr_res_0_a(){
+    ctx.regs.a &= ~(1 << 0);
     ctx.cycles += 8;
 }

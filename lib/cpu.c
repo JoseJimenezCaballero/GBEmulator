@@ -8,6 +8,7 @@ void cpu_init(){
     ctx.regs.pc = 0x100; //make the pc the entry point
     ctx.regs.sp = 0xFFFE; //make stack point to the top of HRAM(fastest for cpu)
     init_instruction_table();
+    init_instruction_tableCB();
 }
 
 cpu_registers *cpu_get_regs(){ //getter to get the regs which we will use here and there
@@ -38,7 +39,7 @@ bool cpu_step(){
     if(!ctx.halted){
         u16 pc = ctx.regs.pc;
         fetch_instruction();
-        printf("Executing Instruction: %02X      Num of cycles: %016X\nRegisters: A:%02X   B:%02X   C:%02X   D:%02X   E:%02X   F:%02X   H:%02X   L:%02X   PC: %04X\n\n", ctx.opcode, ctx.cycles, ctx.regs.a, ctx.regs.b,ctx.regs.c,ctx.regs.d,ctx.regs.e,ctx.regs.f,ctx.regs.h,ctx.regs.l, pc);
+        printf("Executing Instruction: %02X      Num of cycles: %016X\nRegisters: A:%02X   B:%02X   C:%02X   D:%02X   E:%02X   F:%02X   H:%02X   L:%02X   PC: %04X   SP: %04X\n\n", ctx.opcode, ctx.cycles, ctx.regs.a, ctx.regs.b,ctx.regs.c,ctx.regs.d,ctx.regs.e,ctx.regs.f,ctx.regs.h,ctx.regs.l, pc, ctx.regs.sp);
         execute(ctx.opcode);
     }
     return true;
