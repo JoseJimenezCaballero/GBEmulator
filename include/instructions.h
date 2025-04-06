@@ -23,14 +23,21 @@ void init_instruction_tableCB();
 
 void instr_nop();//00
 void ld_bc_d16();//01
+void instr_ld_bc_a();//02
+void inc_bc();//03
+void inc_b();//04
+void instr_dec_b();//05
 void instr_ld_b_d8();//06
+void instr_dec_c();//0D
 void instr_ld_c_d8();//0E
 
 void jr_r8();//18
 
+void instr_nz_r8();//20
 void instr_ld_hl_d16();//21
 void instr_jr_z_r8();//28
 
+void instr_ld_hl_a();//32
 void ld_a_d8();//3E
 
 void instr_ld_b_a();//47

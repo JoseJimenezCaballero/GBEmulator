@@ -7,7 +7,7 @@ cpu_context ctx = {0};
 void cpu_init(){
     ctx.regs.pc = 0x100; //make the pc the entry point
     ctx.regs.sp = 0xFFFE; //make stack point to the top of HRAM(fastest for cpu)
-    init_instruction_table();
+    init_instruction_table();//init instruction tables
     init_instruction_tableCB();
 }
 

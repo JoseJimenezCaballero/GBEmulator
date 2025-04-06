@@ -12,14 +12,21 @@ InstructionFuncCB instruction_tableCB[256] = {0};//declare the CB table
 void init_instruction_table(){
     instruction_table[0x00] = instr_nop;
     instruction_table[0x01] = ld_bc_d16;
+    instruction_table[0x02] = instr_ld_bc_a;
+    instruction_table[0x03] = inc_bc;
+    instruction_table[0x04] = inc_b;
+    instruction_table[0x05] = instr_dec_b;
     instruction_table[0x06] = instr_ld_b_d8;
+    instruction_table[0x0D] = instr_dec_c;
     instruction_table[0x0E] = instr_ld_c_d8;
 
     instruction_table[0x18] = jr_r8;
 
+    instruction_table[0x20] = instr_nz_r8;
     instruction_table[0x21] = instr_ld_hl_d16;
     instruction_table[0x28] = instr_jr_z_r8;
 
+    instruction_table[0x32] = instr_ld_hl_a;
     instruction_table[0x3E] = ld_a_d8;
 
     instruction_table[0x47] = instr_ld_b_a;
@@ -64,11 +71,97 @@ void ld_bc_d16(){
     ctx.cycles += 12;
 }
 
+//02
+void instr_ld_bc_a(){//load a onto mem address at BC
+    u16 address = (ctx.regs.b << 8) | ctx.regs.c; //shift high and or with low
+    bus_write(address, ctx.regs.a);
+    ctx.cycles += 8;
+
+}
+
+//03
+void inc_bc(){//increment the value stored at bc
+    u16 bc = (ctx.regs.b << 8) | ctx.regs.c;//put together, increment, then split
+    bc++;
+    ctx.regs.b = (bc >> 8) & 0xFF;
+    ctx.regs.c = bc & 0xFF;
+    ctx.cycles += 8;
+
+}
+
+//04
+void inc_b(){
+    u8 result = ctx.regs.b + 1;
+    ctx.regs.f &= ~(FLAG_Z | FLAG_H); // Clear Z and H flags
+
+    if(result == 0){
+        ctx.regs.f |= FLAG_Z;
+    }
+    if ((ctx.regs.b & 0x0F) == 0x0F) {
+        ctx.regs.f |= FLAG_H;
+    }
+
+    ctx.regs.b = result;
+    ctx.cycles += 4;
+
+}
+
+//05
+void instr_dec_b(){//decrement register b
+    u8 result = ctx.regs.b - 1;
+    u8 carry = ctx.regs.f & FLAG_C;//Preserve carry flag
+
+    //check flags
+    ctx.regs.f = 0;
+    if(result == 0){//if the result eq zero then set zero flag
+        ctx.regs.f |= FLAG_Z;
+    }
+
+    ctx.regs.f |= FLAG_N;//set the subtract flag
+    if((ctx.regs.b & 0X0F) == 0x00){//if the lower nibble was at 0 then when we subtract we will borrow from 4th bit
+        ctx.regs.f |= FLAG_H;//set the half carry flag since we borrow from 4th bit
+    }
+
+    ctx.regs.f |= carry;//reapply carry flag
+    ctx.regs.b = result;
+    ctx.cycles += 4;
+
+}
 
 //06
 void instr_ld_b_d8(){
     u8 value = bus_read(ctx.regs.pc++);
     ctx.regs.b = value;
+    ctx.cycles += 8;
+
+}
+
+//0D
+void instr_dec_c(){//decrement register c
+    u8 result = ctx.regs.c - 1;
+    u8 carry = ctx.regs.f & FLAG_C;//Preserve carry flag
+
+    //check flags
+    ctx.regs.f = 0;
+    if(result == 0){//if the result eq zero then set zero flag
+        ctx.regs.f |= FLAG_Z;
+    }
+
+    ctx.regs.f |= FLAG_N;//set the subtract flag
+    if((ctx.regs.c & 0X0F) == 0x00){//if the lower nibble was at 0 then when we subtract we will borrow from 4th bit
+        ctx.regs.f |= FLAG_H;//set the half carry flag since we borrow from 4th bit
+    }
+
+    ctx.regs.f |= carry;//reapply carry flag
+    ctx.regs.c = result;
+    ctx.cycles += 4;
+
+}
+
+//0E
+void instr_ld_c_d8(){
+    u8 value = bus_read(ctx.regs.pc++);
+    ctx.regs.c = value;
     ctx.cycles += 8;
 
 }
@@ -79,6 +172,31 @@ void jr_r8(){
     ctx.regs.pc += offset;
     ctx.cycles += 12;
 }   
+
+//20
+void instr_nz_r8(){
+    //jump if z flag is NOT set
+    if(!(ctx.regs.f & FLAG_Z)){//if flag z is set
+        s8 offset = (s8) bus_read(ctx.regs.pc++); //cast to signed char so that neg offset works
+        ctx.regs.pc += offset;
+        ctx.cycles += 12;
+    }
+    else{
+        ctx.regs.pc++;
+        ctx.cycles += 8;
+    }
+}
+
+//21
+void instr_ld_hl_d16(){
+    //load 16 bit immediate to registers
+    u8 low = bus_read(ctx.regs.pc++);
+    u8 high = bus_read(ctx.regs.pc++);
+    ctx.regs.h = high;
+    ctx.regs.l = low;
+    ctx.cycles += 12;
+
+}
 
 //28
 void instr_jr_z_r8(){
@@ -94,23 +212,15 @@ void instr_jr_z_r8(){
     }
 }
 
-//0E
-void instr_ld_c_d8(){
-    u8 value = bus_read(ctx.regs.pc++);
-    ctx.regs.c = value;
+//32
+void instr_ld_hl_a(){//load onto the address in HL whats on A then decrement HL
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l; //combine h and l to HL
+    bus_write(address, ctx.regs.a);//@address write whats on a
+
+    address--;
+    ctx.regs.h = (address >> 8) & 0xFF;//store updated high byte
+    ctx.regs.l = address & 0XFF;//store the updated low
     ctx.cycles += 8;
-
-}
-
-//21
-void instr_ld_hl_d16(){
-    //load 16 bit immediate to registers
-    u8 low = bus_read(ctx.regs.pc++);
-    u8 high = bus_read(ctx.regs.pc++);
-    ctx.regs.h = high;
-    ctx.regs.l = low;
-    ctx.cycles += 12;
-
 }
 
 //3E
