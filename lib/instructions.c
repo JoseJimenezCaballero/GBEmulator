@@ -17,8 +17,15 @@ void init_instruction_table(){
     instruction_table[0x04] = inc_b;
     instruction_table[0x05] = instr_dec_b;
     instruction_table[0x06] = instr_ld_b_d8;
+    instruction_table[0x07] = instr_rlca;
+    instruction_table[0x08] = instr_ld_a16_sp;
+    instruction_table[0x09] = instr_add_hl_bc;
+    instruction_table[0x0A] = instr_ld_a_bc;
+    instruction_table[0x0B] = instr_dec_bc;
+    instruction_table[0x0C] = instr_inc_c;
     instruction_table[0x0D] = instr_dec_c;
     instruction_table[0x0E] = instr_ld_c_d8;
+    instruction_table[0x0F] = instr_rrca;
 
     instruction_table[0x18] = jr_r8;
 
@@ -136,6 +143,94 @@ void instr_ld_b_d8(){
 
 }
 
+//07
+void instr_rlca(){//rotate a left. old bit 7 to carry flag and bit 0.
+    u8 a = ctx.regs.a;
+    u8 msb = (a & 0x80) >> 7; //get most sig bit
+
+    ctx.regs.a = (a << 1) | msb; //rotate left through msb into lsb
+    ctx.regs.f = 0;
+    if(msb){
+        ctx.regs.f |= FLAG_C;
+    }
+
+    ctx.cycles += 4;
+}
+
+
+//08
+void instr_ld_a16_sp(){ //store 16 bit val of the sp into the 16 bit address a16
+    u8 low = bus_read(ctx.regs.pc++);
+    u8 high = bus_read(ctx.regs.pc++);
+    u16 address = (high << 8) | low;
+
+    bus_write(address, ctx.regs.sp & 0xFF); //write the low
+    bus_write(address + 1, (ctx.regs.sp >> 8)); //write the high
+
+    ctx.cycles += 20;
+}
+
+//09
+void instr_add_hl_bc(){ //add hl and bc and store to hl
+    u16 hl = (ctx.regs.h << 8) | ctx.regs.l;
+    u16 bc = (ctx.regs.b << 8) | ctx.regs.c;
+
+    u32 result = bc + hl; //32 to detect carry
+    ctx.regs.f &= ~(FLAG_N | FLAG_H | FLAG_C); //clear n h and c
+
+    if(((hl & 0x0FFF) + (bc & 0x0FFF)) > 0x0FFF){ //check for half carry from bit 11 since 32-bit
+        ctx.regs.f |= FLAG_H;
+    }
+
+    if(result > 0xFFFF){ //check for full carry bit 15
+        ctx.regs.f |= FLAG_C;
+    }
+
+    ctx.regs.h = (result >> 8) & 0xFF;
+    ctx.regs.l = result & 0xFF;
+    ctx.cycles += 8;
+}
+
+//0A
+void instr_ld_a_bc(){ //load val at addy bc to a
+    u16 address = (ctx.regs.b << 8) | ctx.regs.c;
+    ctx.regs.a = bus_read(address);
+    ctx.cycles += 8;
+}
+
+//0B
+void instr_dec_bc(){ //decrement bc by one
+    u16 bc = (ctx.regs.b << 8) | ctx.regs.c;
+    bc--;
+    ctx.regs.b = (bc >> 8) & 0x0FF;
+    ctx.regs.c = bc & 0x0FF;
+    ctx.cycles += 8;
+}
+
+//0C
+void instr_inc_c(){
+    u8 result = ctx.regs.c + 1;
+    ctx.regs.f &= FLAG_C; // Preserve Carry flag only
+    ctx.regs.f &= ~FLAG_N; //clear n flag
+
+    if((ctx.regs.c & 0x0F) == 0x0F){
+        ctx.regs.f |= FLAG_H; //set half-carry if lower nibble was 0xF
+    }
+    else{
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    if(result == 0){
+        ctx.regs.f |= FLAG_Z;
+    }
+    else{
+        ctx.regs.f &= ~FLAG_Z;
+    }
+
+    ctx.regs.c = result;
+    ctx.cycles += 4;
+}
+
 //0D
 void instr_dec_c(){//decrement register c
     u8 result = ctx.regs.c - 1;
@@ -164,6 +259,21 @@ void instr_ld_c_d8(){
     ctx.regs.c = value;
     ctx.cycles += 8;
 
+}
+
+//0F
+void instr_rrca(){ //rotate the contents of reg a right by 1 bit
+    u8 a = ctx.regs.a;
+    u8 bit0 = a & 0x01;
+
+    ctx.regs.a = (a >> 1) | (bit0 << 7); //rotate right, wrap bit 0 to bit 7
+
+    ctx.regs.f = 0;
+    if(bit0){
+        ctx.regs.f &= FLAG_C; //set carry flag if we had the bit before
+    }
+
+    ctx.cycles += 4;
 }
 
 //18

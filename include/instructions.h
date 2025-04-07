@@ -28,8 +28,15 @@ void inc_bc();//03
 void inc_b();//04
 void instr_dec_b();//05
 void instr_ld_b_d8();//06
+void instr_rlca();//07
+void instr_ld_a16_sp();//08
+void instr_add_hl_bc();//09
+void instr_ld_a_bc();//0A
+void instr_dec_bc();//0B
+void instr_inc_c();//0C
 void instr_dec_c();//0D
 void instr_ld_c_d8();//0E
+void instr_rrca();//0F
 
 void jr_r8();//18
 
