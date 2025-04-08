@@ -27,6 +27,10 @@ void init_instruction_table(){
     instruction_table[0x0E] = instr_ld_c_d8;
     instruction_table[0x0F] = instr_rrca;
 
+    instruction_table[0x10] = stop_0;
+    instruction_table[0x11] = ld_de_d16;
+    instruction_table[0x12] = ld_de_a;
+    instruction_table[0x13] = instr_inc_de;
     instruction_table[0x18] = jr_r8;
 
     instruction_table[0x20] = instr_nz_r8;
@@ -191,6 +195,7 @@ void instr_add_hl_bc(){ //add hl and bc and store to hl
     ctx.cycles += 8;
 }
 
+
 //0A
 void instr_ld_a_bc(){ //load val at addy bc to a
     u16 address = (ctx.regs.b << 8) | ctx.regs.c;
@@ -274,6 +279,41 @@ void instr_rrca(){ //rotate the contents of reg a right by 1 bit
     }
 
     ctx.cycles += 4;
+}
+
+//10
+void stop_0(){ //system stop does not need to be implemeted
+    bus_read(ctx.regs.pc++);
+    ctx.cycles += 4;
+
+}
+
+//11
+void ld_de_d16(){ //load 16 bit value onto DE
+    u8 low = bus_read(ctx.regs.pc++);
+    u8 high = bus_read(ctx.regs.pc++);
+
+    ctx.regs.d = high;
+    ctx.regs.e = low;
+
+    ctx.cycles += 12;
+}
+
+//12
+void ld_de_a(){//load 8 bit val at a to address @ de
+    u16 address = (ctx.regs.d << 8) | ctx.regs.e;
+    bus_write(address, ctx.regs.a);
+    ctx.cycles += 8;
+}
+
+//13
+void instr_inc_de(){//increment val at de by one
+    u16 de = (ctx.regs.d << 8) | ctx.regs.e;
+    de++;
+    ctx.regs.d = de >> 8 & 0xFF;
+    ctx.regs.e = de & 0xFF;
+
+    ctx.cycles += 8;
 }
 
 //18

@@ -38,6 +38,10 @@ void instr_dec_c();//0D
 void instr_ld_c_d8();//0E
 void instr_rrca();//0F
 
+void stop_0();//10
+void ld_de_d16();//11
+void ld_de_a();//12
+void instr_inc_de();//13
 void jr_r8();//18
 
 void instr_nz_r8();//20
