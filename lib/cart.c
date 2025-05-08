@@ -1,12 +1,5 @@
 #include <cart.h>
 
-typedef struct { //the current cartridge being used will be kept in a context
-    char filename[1024];//name
-    u32 rom_size;//size
-    u8 *rom_data;//its actual data will be loaded into memory
-    rom_header *header;//header info will be contained here too
-} cart_context;
-
 static cart_context ctx;
 
 static const char *ROM_TYPES[] = {//look up table for rom types
@@ -131,7 +124,7 @@ const char *cart_type_name() {//looks up the cart name
 size and data onto the context for the cart as well as the header.
 */
 bool cart_load(char *cart) {
-    snprintf(ctx.filename, sizeof(ctx.filename), "%s", cart);//pass in the file name
+    snprintf(ctx.filename, sizeof(ctx.filename), "%s", cart);//pass in the file name onto the context using a safe version which doesnt allow buffer overflow
     FILE *fp = fopen(cart, "r");//open file
 
     if (!fp) {//error check
@@ -179,5 +172,6 @@ u8 cart_read(u16 address){
 }
 
 u8 cart_write(u16 address, u8 value){
+    printf("WOAH NO CART WRITE YET BUDDY\n");
     NO_IMPL
 }

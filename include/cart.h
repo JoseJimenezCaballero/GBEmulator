@@ -19,6 +19,13 @@ typedef struct {//we will read and write the header info for the cart into a str
     u16 global_checksum;
 } rom_header;
 
+typedef struct { //the current cartridge being used will be kept in a context
+    char filename[1024];//name
+    u32 rom_size;//size
+    u8 *rom_data;//its actual data will be loaded into memory
+    rom_header *header;//header info will be contained here too
+} cart_context;
+
 //Cart load is used for initially loading the cartridge onto memory and making a struct for it and casting the data accordignly for headers and whatnot
 bool cart_load(char *cart);
 
