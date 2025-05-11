@@ -42,7 +42,12 @@ void stop_0();//10
 void ld_de_d16();//11
 void ld_de_a();//12
 void instr_inc_de();//13
+void instr_inc_d();//14
+void instr_dec_d();//15
+void instr_ld_d_d8();//16
+void instr_rla();//17
 void jr_r8();//18
+void add_hl_de();//19
 
 void instr_nz_r8();//20
 void instr_ld_hl_d16();//21

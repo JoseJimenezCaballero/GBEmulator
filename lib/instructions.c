@@ -31,7 +31,12 @@ void init_instruction_table(){
     instruction_table[0x11] = ld_de_d16;
     instruction_table[0x12] = ld_de_a;
     instruction_table[0x13] = instr_inc_de;
+    instruction_table[0x14] = instr_inc_d;
+    instruction_table[0x15] = instr_dec_d;
+    instruction_table[0x16] = instr_ld_d_d8;
+    instruction_table[0x17] = instr_rla;
     instruction_table[0x18] = jr_r8;
+    instruction_table[0x19] = add_hl_de;
 
     instruction_table[0x20] = instr_nz_r8;
     instruction_table[0x21] = instr_ld_hl_d16;
@@ -103,7 +108,7 @@ void inc_bc(){//increment the value stored at bc
 //04
 void inc_b(){
     u8 result = ctx.regs.b + 1;
-    ctx.regs.f &= ~(FLAG_Z | FLAG_H); // Clear Z and H flags
+    ctx.regs.f &= ~(FLAG_Z | FLAG_H | FLAG_N); //clear flags z and h to see if we have to mod and n for all inc 
 
     if(result == 0){
         ctx.regs.f |= FLAG_Z;
@@ -316,12 +321,107 @@ void instr_inc_de(){//increment val at de by one
     ctx.cycles += 8;
 }
 
+//14
+void instr_inc_d(){
+    u8 result = ctx.regs.d + 1;
+    ctx.regs.f &= ~(FLAG_Z | FLAG_H | FLAG_N); //clear flags z and h to see if we have to mod and n (subtract) for all inc 
+
+    if(result == 0){
+        ctx.regs.f |= FLAG_Z;
+    }
+    if ((ctx.regs.d & 0x0F) == 0x0F) {
+        ctx.regs.f |= FLAG_H;
+    }
+
+    ctx.regs.d = result;
+    ctx.cycles += 4;
+
+}
+
+//15
+void instr_dec_d(){//decrement register d
+    u8 result = ctx.regs.d - 1;
+    u8 carry = ctx.regs.f & FLAG_C;//Preserve carry flag
+
+    //check flags
+    ctx.regs.f = 0;
+    if(result == 0){//if the result eq zero then set zero flag
+        ctx.regs.f |= FLAG_Z;
+    }
+
+    ctx.regs.f |= FLAG_N;//set the subtract flag
+    if((ctx.regs.d & 0X0F) == 0x00){//if the lower nibble was at 0 then when we subtract we will borrow from 4th bit
+        ctx.regs.f |= FLAG_H;//set the half carry flag since we borrow from 4th bit
+    }
+
+    ctx.regs.f |= carry;//reapply carry flag
+    ctx.regs.d = result;
+    ctx.cycles += 4;
+
+}
+
+//16
+void instr_ld_d_d8(){//load 8bit val to d
+    u8 value = bus_read(ctx.regs.pc++); //get val
+    ctx.regs.d = value; //set reg d to val
+    ctx.cycles += 8;
+
+}
+
+//17
+void instr_rla() {
+    u8 old_carry = (ctx.regs.f & FLAG_C) ? 1 : 0;
+    u8 old_bit7 = (ctx.regs.a & 0x80) >> 7;
+
+    ctx.regs.a = (ctx.regs.a << 1) | old_carry;
+
+    // Set flags
+    ctx.regs.f = 0; // Clear Z, N, H, C
+    if (old_bit7) {
+        ctx.regs.f |= FLAG_C;
+    }
+
+    ctx.cycles += 4;
+}
+
+
 //18
 void jr_r8(){
     s8 offset = (s8) bus_read(ctx.regs.pc++); //its signed so we cast to signed 8 bit
     ctx.regs.pc += offset;
     ctx.cycles += 12;
-}   
+}
+
+//19
+void add_hl_de(){ //add reg DE to HL
+    u16 hl = (ctx.regs.h << 8) | ctx.regs.l;
+    u16 de = (ctx.regs.d << 8) | ctx.regs.e;
+
+    u32 result = hl + de;
+    ctx.regs.f &= ~FLAG_N; //clear n flag(negate it)
+
+    if(((hl & 0x0FFF) + (de & 0x0FFF)) > 0x0FFF){
+        ctx.regs.f |= FLAG_H;
+    }
+    else{
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    // Set C flag if carry from bit 15
+    if (result > 0xFFFF) {
+        ctx.regs.f |= FLAG_C;
+    } 
+    else {
+        ctx.regs.f &= ~FLAG_C;
+    }
+
+    // Store result back in HL
+    ctx.regs.h = (result >> 8) & 0xFF; //shift result to get just the high
+    ctx.regs.l = result & 0xFF;
+
+    ctx.cycles += 8;
+
+}
 
 //20
 void instr_nz_r8(){
