@@ -48,6 +48,11 @@ void instr_ld_d_d8();//16
 void instr_rla();//17
 void jr_r8();//18
 void add_hl_de();//19
+void instr_ld_a_de();//1A
+void instr_dec_de();//1B
+void instr_inc_e();//1C
+void instr_dec_e();//1D
+void instr_ld_e_d8();//1E
 
 void instr_nz_r8();//20
 void instr_ld_hl_d16();//21

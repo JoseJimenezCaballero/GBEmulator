@@ -37,6 +37,11 @@ void init_instruction_table(){
     instruction_table[0x17] = instr_rla;
     instruction_table[0x18] = jr_r8;
     instruction_table[0x19] = add_hl_de;
+    instruction_table[0x1A] = instr_ld_a_de;
+    instruction_table[0x1B] = instr_dec_de;
+    instruction_table[0x1C] = instr_inc_e;
+    instruction_table[0x1D] = instr_dec_e;
+    instruction_table[0x1E] = instr_ld_e_d8;
 
     instruction_table[0x20] = instr_nz_r8;
     instruction_table[0x21] = instr_ld_hl_d16;
@@ -419,6 +424,76 @@ void add_hl_de(){ //add reg DE to HL
     ctx.regs.h = (result >> 8) & 0xFF; //shift result to get just the high
     ctx.regs.l = result & 0xFF;
 
+    ctx.cycles += 8;
+
+}
+
+//1A
+void instr_ld_a_de(){ //load val at addy in de to a
+    u16 address = (ctx.regs.d << 8) | ctx.regs.e;
+    ctx.regs.a = bus_read(address);
+    ctx.cycles += 8;
+}
+
+//1B
+void instr_dec_de(){ //decrement bc by one
+    u16 de = (ctx.regs.d << 8) | ctx.regs.e;
+    de--;
+    ctx.regs.d = (de >> 8) & 0x0FF;
+    ctx.regs.e = de & 0x0FF;
+    ctx.cycles += 8;
+}
+
+//1C
+void instr_inc_e(){
+    u8 result = ctx.regs.e + 1;
+    ctx.regs.f &= FLAG_C; // Preserve Carry flag only
+    ctx.regs.f &= ~FLAG_N; //clear n flag
+
+    if((ctx.regs.e & 0x0F) == 0x0F){
+        ctx.regs.f |= FLAG_H; //set half-carry if lower nibble was 0xF
+    }
+    else{
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    if(result == 0){
+        ctx.regs.f |= FLAG_Z;
+    }
+    else{
+        ctx.regs.f &= ~FLAG_Z;
+    }
+
+    ctx.regs.e = result;
+    ctx.cycles += 4;
+}
+
+//1D
+void instr_dec_e(){//decrement register e
+    u8 result = ctx.regs.e - 1;
+    u8 carry = ctx.regs.f & FLAG_C;//Preserve carry flag
+
+    //check flags
+    ctx.regs.f = 0;
+    if(result == 0){//if the result eq zero then set zero flag
+        ctx.regs.f |= FLAG_Z;
+    }
+
+    ctx.regs.f |= FLAG_N;//set the subtract flag
+    if((ctx.regs.e & 0X0F) == 0x00){//if the lower nibble was at 0 then when we subtract we will borrow from 4th bit
+        ctx.regs.f |= FLAG_H;//set the half carry flag since we borrow from 4th bit
+    }
+
+    ctx.regs.f |= carry;//reapply carry flag
+    ctx.regs.e = result;
+    ctx.cycles += 4;
+
+}
+
+//1E
+void instr_ld_e_d8(){
+    u8 value = bus_read(ctx.regs.pc++);
+    ctx.regs.e = value;
     ctx.cycles += 8;
 
 }
