@@ -50,6 +50,8 @@ void init_instruction_table(){
     instruction_table[0x23] = instr_inc_hl;
     instruction_table[0x24] = instr_inc_h;
     instruction_table[0x25] = instr_dec_h;
+    instruction_table[0x26] = instr_ld_h_d8;
+    instruction_table[0x27] = instr_daa;
     instruction_table[0x28] = instr_jr_z_r8;
 
     instruction_table[0x32] = instr_ld_hl_a;
@@ -601,6 +603,63 @@ void instr_dec_h(){//decrement val at register h and check flags
 
     ctx.regs.f |= carry;//reapply carry flag
     ctx.regs.h = result;
+    ctx.cycles += 4;
+
+}
+
+//26
+void instr_ld_h_d8(){//load 8bit val to h
+    u8 value = bus_read(ctx.regs.pc++); //get val
+    ctx.regs.h = value; //set reg h to val
+    ctx.cycles += 8;
+
+}
+
+//27
+void instr_daa(){//function used after performing arthmetic instructions whose inputs where binary, adjusting the result to likewise be in binary
+    u8 correction = 0; //the correction/adjustment that will be ultimatley added to reg A
+    bool set_carry = false; //will flag if we set carry or not
+
+    //we have to check the N flag first to know what to do(according to https://rgbds.gbdev.io/docs/v0.9.2/gbz80.7#DAA)
+    //the subtract flag tells us if we are executing this function after a sub or add fucntion
+
+    //if N is not set(ADD)
+    if(!(ctx.regs.f & FLAG_N)){
+        //check half carry
+        if((ctx.regs.f & FLAG_H) || (ctx.regs.a & 0x0F) > 0x09){
+            correction |= 0x06;
+        }
+        
+        //check carry flag
+        if((ctx.regs.f & FLAG_C) || (ctx.regs.a > 0x99)){
+            correction |= 0x60;
+            set_carry = true;
+        }
+        ctx.regs.a += correction; //finally add the correction to reg A
+    }
+    //else means thatt the prev opcode was SUB
+    else{
+        //check half carry
+        if(ctx.regs.f & FLAG_H){
+            correction |= 0x06;
+        }
+
+        //check carry
+        if(ctx.regs.f & FLAG_C){
+            correction |= 0x60;
+        }
+        ctx.regs.a -= correction;
+    }
+
+    //set flags
+    ctx.regs.f &= ~(FLAG_Z | FLAG_H); //clear z and h since we modify them (h is always 0)
+    if(ctx.regs.a == 0){ //check for Z flag
+        ctx.regs.f |= FLAG_Z;
+    }
+    if(set_carry){ //check for C flag 
+        ctx.regs.f |= FLAG_C;
+    }
+
     ctx.cycles += 4;
 
 }
