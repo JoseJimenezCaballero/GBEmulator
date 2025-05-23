@@ -64,6 +64,13 @@ void instr_dec_h();//25
 void instr_ld_h_d8();//26
 void instr_daa();//27
 void instr_jr_z_r8();//28
+void add_hl_hl();//29
+void instr_ld_a_hlplus();//2A
+void instr_dec_hl();//2B
+void instr_inc_l();//2C
+void instr_dec_l();//2D
+void instr_ld_l_d8();//2E
+void instr_cpl();//2F
 
 void instr_ld_hl_a();//32
 void ld_a_d8();//3E
