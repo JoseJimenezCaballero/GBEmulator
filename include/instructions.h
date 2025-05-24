@@ -72,7 +72,16 @@ void instr_dec_l();//2D
 void instr_ld_l_d8();//2E
 void instr_cpl();//2F
 
-void instr_ld_hl_a();//32
+void instr_nc_r8();//30
+void instr_ld_sp_d16();//31
+void instr_ld_hlminus_a();//32
+void instr_inc_sp();//33
+void instr_inc_hl();//34
+void instr_dec_hl();//35
+void instr_ld_hl_d8();//36
+void instr_scf();//37
+void instr_jr_c_r8();//38
+
 void ld_a_d8();//3E
 
 void instr_ld_b_a();//47

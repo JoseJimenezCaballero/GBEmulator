@@ -61,7 +61,15 @@ void init_instruction_table(){
     instruction_table[0x2E] = instr_ld_l_d8;
     instruction_table[0x2F] = instr_cpl;
 
-    instruction_table[0x32] = instr_ld_hl_a;
+    instruction_table[0x30] = instr_nc_r8;
+    instruction_table[0x31] = instr_ld_sp_d16;
+    instruction_table[0x32] = instr_ld_hlminus_a;
+    instruction_table[0x33] = instr_inc_sp;
+    instruction_table[0x34] = instr_inc_hl;
+    instruction_table[0x35] = instr_dec_hl;
+    instruction_table[0x36] = instr_ld_hl_d8;
+    instruction_table[0x37] = instr_scf;
+    instruction_table[0x38] = instr_jr_c_r8;
     instruction_table[0x3E] = ld_a_d8;
 
     instruction_table[0x47] = instr_ld_b_a;
@@ -794,15 +802,129 @@ void instr_cpl(){ //complement acucumulator for a so -> a = ~a also set flags n 
     ctx.cycles += 4;
 }
 
-//32
-void instr_ld_hl_a(){//load onto the address in HL whats on A then decrement HL
-    u16 address = (ctx.regs.h << 8) | ctx.regs.l; //combine h and l to HL
-    bus_write(address, ctx.regs.a);//@address write whats on a
+//30
+void instr_nc_r8(){    //jump if c flag is NOT set
+    if(!(ctx.regs.f & FLAG_C)){//if flag c is not set then jump
+        s8 offset = (s8) bus_read(ctx.regs.pc++); //cast to signed char so that neg offset works
+        ctx.regs.pc += offset;
+        ctx.cycles += 12;
+    }
+    else{
+        ctx.regs.pc++;
+        ctx.cycles += 8;
+    }
+}
 
-    address--;
-    ctx.regs.h = (address >> 8) & 0xFF;//store updated high byte
-    ctx.regs.l = address & 0XFF;//store the updated low
+//31
+void instr_ld_sp_d16(){
+    //load 16 bit immediate to sp
+    u8 low = bus_read(ctx.regs.pc++);
+    u8 high = bus_read(ctx.regs.pc++);
+
+    ctx.regs.sp = (high << 8) | low; //combine into sp
+    ctx.cycles += 12;
+
+}
+
+//32
+void instr_ld_hlminus_a(){ //load whats on a to addy stored in HL and decrement HL
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l; //combine regs to get addy
+    bus_write(address, ctx.regs.a);
+
+    address--;//decrement HL
+    ctx.regs.h = (address >> 8) & 0xFF;//take upper 8 bits of address and store in h. It does it by shifting the upper 8 bits down and then zeroing out the first 8 and u8 automatically takes the lower 8 bits
+    ctx.regs.l = address & 0xFF; //take lower 8 bits
+
     ctx.cycles += 8;
+}
+
+//33
+void instr_inc_sp(){//increment val at sp by one
+    ctx.regs.sp++; //increment it
+    ctx.cycles += 8;
+}
+
+//34
+void instr_inc_hl(){//increment val at addy hl then check flags
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l; // Form HL
+    u8 value = bus_read(address);                // Read byte from memory
+    u8 result = value + 1;                       // Increment the value
+
+    // Preserve carry flag only
+    ctx.regs.f &= FLAG_C;
+    ctx.regs.f &= ~FLAG_N; // Clear N flag (this is not a subtraction)
+
+    if ((value & 0x0F) == 0x0F) {
+        ctx.regs.f |= FLAG_H; // Set H if lower nibble overflows
+    } else {
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    if (result == 0) {
+        ctx.regs.f |= FLAG_Z;
+    } else {
+        ctx.regs.f &= ~FLAG_Z;
+    }
+
+    bus_write(address, result);                 // Write incremented value back to memory
+    ctx.cycles += 12;
+}
+
+//35
+void instr_dec_hl() {//decrement val at addy hl then check flags
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l; // Form HL
+    u8 value = bus_read(address);                // Read byte from memory
+    u8 result = value - 1;                       // decrement the value
+
+    ctx.regs.f &= FLAG_C; // Preserve carry flag only
+    ctx.regs.f |= FLAG_N; // set N flag
+
+    if ((value & 0x0F) == 0x00) {
+        ctx.regs.f |= FLAG_H; // Set H if borrow from bit 4
+    } else {
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    if (result == 0) {
+        ctx.regs.f |= FLAG_Z;
+    } else {
+        ctx.regs.f &= ~FLAG_Z;
+    }
+
+    bus_write(address, result);                 // Write decrement value back to memory
+    ctx.cycles += 12;
+}
+
+//36
+void instr_ld_hl_d8(){//load 8bit val to hl address
+    u8 value = bus_read(ctx.regs.pc++); //get val
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l;
+
+    bus_write(address, value);
+
+    ctx.cycles += 12;
+}
+
+//37
+void instr_scf(){ //just sets the carry flag and sets 0 for H and N
+    ctx.regs.f &= ~(FLAG_H | FLAG_N); //set 0 to H and N
+    ctx.regs.f |= FLAG_C; //set c flag
+
+    ctx.cycles += 4;
+}
+
+//38
+void instr_jr_c_r8(){ //jump if c flag is set
+
+    if(ctx.regs.f & FLAG_C){//if flag c is set
+        s8 offset = (s8) bus_read(ctx.regs.pc++); //cast to signed char so that neg offset works
+        ctx.regs.pc += offset;
+        ctx.cycles += 12;
+    }
+    else{
+        ctx.regs.pc++;
+        ctx.cycles += 8;
+    }
 }
 
 //3E
