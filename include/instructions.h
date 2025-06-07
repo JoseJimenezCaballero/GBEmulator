@@ -76,13 +76,18 @@ void instr_nc_r8();//30
 void instr_ld_sp_d16();//31
 void instr_ld_hlminus_a();//32
 void instr_inc_sp();//33
-void instr_inc_hl();//34
-void instr_dec_hl();//35
+void instr_inc_8bithl();//34
+void instr_dec_hl8bit();//35
 void instr_ld_hl_d8();//36
 void instr_scf();//37
 void instr_jr_c_r8();//38
-
+void instr_add_hl_sp();//39
+void instr_ld_a_hlminus();//3A
+void instr_dec_sp();//3B
+void instr_inc_a();//3C
+void instr_dec_a();//3D
 void ld_a_d8();//3E
+void instr_ccf();//3F
 
 void instr_ld_b_a();//47
 

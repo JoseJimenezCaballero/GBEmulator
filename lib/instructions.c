@@ -65,12 +65,18 @@ void init_instruction_table(){
     instruction_table[0x31] = instr_ld_sp_d16;
     instruction_table[0x32] = instr_ld_hlminus_a;
     instruction_table[0x33] = instr_inc_sp;
-    instruction_table[0x34] = instr_inc_hl;
-    instruction_table[0x35] = instr_dec_hl;
+    instruction_table[0x34] = instr_inc_8bithl;
+    instruction_table[0x35] = instr_dec_hl8bit;
     instruction_table[0x36] = instr_ld_hl_d8;
     instruction_table[0x37] = instr_scf;
     instruction_table[0x38] = instr_jr_c_r8;
+    instruction_table[0x39] = instr_add_hl_sp;
+    instruction_table[0x3A] = instr_ld_a_hlminus;
+    instruction_table[0x3B] = instr_dec_sp;
+    instruction_table[0x3C] = instr_inc_a;
+    instruction_table[0x3D] = instr_dec_a;
     instruction_table[0x3E] = ld_a_d8;
+    instruction_table[0x3F] = instr_ccf;
 
     instruction_table[0x47] = instr_ld_b_a;
 
@@ -470,7 +476,7 @@ void instr_inc_e(){
     ctx.regs.f &= FLAG_C; // Preserve Carry flag only
     ctx.regs.f &= ~FLAG_N; //clear n flag
 
-    if((ctx.regs.e & 0x0F) == 0x0F){
+    if((ctx.regs.e & 0x0F) + 1 > 0x0F){
         ctx.regs.f |= FLAG_H; //set half-carry if lower nibble was 0xF
     }
     else{
@@ -746,7 +752,7 @@ void instr_inc_l(){ //increment 8 bit val stored at l
     ctx.regs.f &= FLAG_C; // Preserve Carry flag only
     ctx.regs.f &= ~FLAG_N; //clear n flag
 
-    if((ctx.regs.l & 0x0F) == 0x0F){
+    if((ctx.regs.l & 0x0F) + 1 > 0x0F){
         ctx.regs.f |= FLAG_H; //set half-carry if lower nibble was 0xF
     }
     else{
@@ -845,7 +851,7 @@ void instr_inc_sp(){//increment val at sp by one
 }
 
 //34
-void instr_inc_hl(){//increment val at addy hl then check flags
+void instr_inc_8bithl(){//increment val at addy hl then check flags
     u16 address = (ctx.regs.h << 8) | ctx.regs.l; // Form HL
     u8 value = bus_read(address);                // Read byte from memory
     u8 result = value + 1;                       // Increment the value
@@ -871,7 +877,7 @@ void instr_inc_hl(){//increment val at addy hl then check flags
 }
 
 //35
-void instr_dec_hl() {//decrement val at addy hl then check flags
+void instr_dec_hl8bit() {//decrement val at addy hl then check flags
     u16 address = (ctx.regs.h << 8) | ctx.regs.l; // Form HL
     u8 value = bus_read(address);                // Read byte from memory
     u8 result = value - 1;                       // decrement the value
@@ -927,11 +933,118 @@ void instr_jr_c_r8(){ //jump if c flag is set
     }
 }
 
+//39
+void instr_add_hl_sp(){ //adds 16 bit value in SP reg pair to HL
+    u16 hl = (ctx.regs.h << 8) | ctx.regs.l;
+
+    u32 result = hl + ctx.regs.sp;
+    ctx.regs.f &= ~FLAG_N; //clear n flag(negate it)
+
+    if(((hl & 0x0FFF) + (ctx.regs.sp & 0x0FFF)) > 0x0FFF){
+        ctx.regs.f |= FLAG_H;
+    }
+    else{
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    // Set C flag if carry from bit 15
+    if (result > 0xFFFF) {
+        ctx.regs.f |= FLAG_C;
+    } 
+    else {
+        ctx.regs.f &= ~FLAG_C;
+    }
+
+    // Store result back in HL
+    ctx.regs.h = (result >> 8) & 0xFF;
+    ctx.regs.l = result & 0xFF;
+
+    ctx.cycles += 8;
+
+}
+
+//3A
+void instr_ld_a_hlminus(){ //load val at addy in hl to reg a then decrement hl
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l;
+    ctx.regs.a = bus_read(address);
+
+    address--; //decrement addy then load it back
+    ctx.regs.h = (address >> 8) & 0xFF; //push the leftmost 4 bytes down like so 0000 1234 then only take the last 4 with 0xFF
+    ctx.regs.l = address & 0xFF; //just take the last 4 like so 1234 [5678]
+
+    ctx.cycles += 8;
+}
+
+//3B
+void instr_dec_sp(){ //decrement sp by one
+    ctx.regs.sp--;
+    ctx.cycles += 8;
+}
+
+//3C
+void instr_inc_a(){ //increment 8 bit val stored at a
+    u8 result = ctx.regs.a + 1;
+    ctx.regs.f &= FLAG_C; // Preserve Carry flag only
+    ctx.regs.f &= ~FLAG_N; //clear n flag
+
+    if((ctx.regs.a & 0x0F) + 1 > 0x0F){
+        ctx.regs.f |= FLAG_H; //set half-carry if lower nibble was 0xF
+    }
+    else{
+        ctx.regs.f &= ~FLAG_H;
+    }
+
+    if(result == 0){
+        ctx.regs.f |= FLAG_Z;
+    }
+    else{
+        ctx.regs.f &= ~FLAG_Z;
+    }
+
+    ctx.regs.a = result;
+    ctx.cycles += 4;
+}
+
+//3D
+void instr_dec_a(){//decrement 8-bit register a
+    u8 result = ctx.regs.a - 1;
+
+    //check flags
+    ctx.regs.f = 0;
+    if(result == 0){//if the result eq zero then set zero flag
+        ctx.regs.f |= FLAG_Z;
+    }
+
+    ctx.regs.f |= FLAG_N;//set the subtract flag
+    if((ctx.regs.a & 0X0F) == 0x00){//if the lower nibble was at 0 then when we subtract we will borrow from 4th bit
+        ctx.regs.f |= FLAG_H;//set the half carry flag since we borrow from 4th bit
+    }
+
+    ctx.regs.a = result;
+    ctx.cycles += 4;
+
+}
+
 //3E
 void ld_a_d8(){
     u8 value = bus_read(ctx.regs.pc++);
     ctx.regs.a = value;
     ctx.cycles += 8;
+}
+
+//3F
+void instr_ccf(){//set n and h flags to zero and invert c flag
+    ctx.regs.f &= ~FLAG_N;
+    ctx.regs.f &= ~FLAG_H;
+    
+    // Invert the Carry flag (if it was 1, clear it; if it was 0, set it)
+    if (ctx.regs.f & FLAG_C) {
+        ctx.regs.f &= ~FLAG_C; // Clear carry
+    } else {
+        ctx.regs.f |= FLAG_C;  // Set carry
+    }
+
+    ctx.cycles += 4;
 }
 
 //47
