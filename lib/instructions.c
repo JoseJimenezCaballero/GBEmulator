@@ -78,7 +78,22 @@ void init_instruction_table(){
     instruction_table[0x3E] = ld_a_d8;
     instruction_table[0x3F] = instr_ccf;
 
+    instruction_table[0x40] = instr_ld_b_b;
+    instruction_table[0x41] = instr_ld_b_c;
+    instruction_table[0x42] = instr_ld_b_d;
+    instruction_table[0x43] = instr_ld_b_e;
+    instruction_table[0x44] = instr_ld_b_h;
+    instruction_table[0x45] = instr_ld_b_l;
+    instruction_table[0x46] = instr_ld_b_hl;
     instruction_table[0x47] = instr_ld_b_a;
+    instruction_table[0x48] = instr_ld_c_b;
+    instruction_table[0x49] = instr_ld_c_c;
+    instruction_table[0x4A] = instr_ld_c_d;
+    instruction_table[0x4B] = instr_ld_c_e;
+    instruction_table[0x4C] = instr_ld_c_h;
+    instruction_table[0x4D] = instr_ld_c_l;
+    instruction_table[0x4E] = instr_ld_c_hl;
+    instruction_table[0x4F] = instr_ld_c_a;
 
     instruction_table[0x6F] = instr_ld_la;
 
@@ -1047,9 +1062,99 @@ void instr_ccf(){//set n and h flags to zero and invert c flag
     ctx.cycles += 4;
 }
 
+//40
+void instr_ld_b_b(){//no op since we are to load reg val b to b
+    ctx.cycles += 4;
+}
+
+//41
+void instr_ld_b_c(){//load reg c vals to b
+    ctx.regs.b = ctx.regs.c;
+    ctx.cycles += 4;
+}
+
+//42
+void instr_ld_b_d(){//load reg d vals to b
+    ctx.regs.b = ctx.regs.d;
+    ctx.cycles += 4;
+}
+
+//43
+void instr_ld_b_e(){
+    ctx.regs.b = ctx.regs.e;
+    ctx.cycles += 4;
+}
+
+//44
+void instr_ld_b_h(){
+    ctx.regs.b = ctx.regs.h;
+    ctx.cycles += 4;
+}
+
+//45
+void instr_ld_b_l(){
+    ctx.regs.b = ctx.regs.l;
+    ctx.cycles += 4;
+}
+
+//46
+void instr_ld_b_hl(){
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l;
+    ctx.regs.b = bus_read(address);
+    ctx.cycles += 8;
+}
+
 //47
 void instr_ld_b_a(){
     ctx.regs.b = ctx.regs.a;
+    ctx.cycles += 4;
+}
+
+//48
+void instr_ld_c_b(){
+    ctx.regs.c = ctx.regs.b;
+    ctx.cycles += 4;
+}
+
+//49
+void instr_ld_c_c(){
+    ctx.cycles += 4;
+}
+
+//4A
+void instr_ld_c_d(){
+    ctx.regs.c = ctx.regs.d;
+    ctx.cycles += 4;
+}
+
+//4B
+void instr_ld_c_e(){
+    ctx.regs.c = ctx.regs.e;
+    ctx.cycles += 4;
+}
+
+//4C
+void instr_ld_c_h(){
+    ctx.regs.c = ctx.regs.h;
+    ctx.cycles += 4;
+}
+
+//4D
+void instr_ld_c_l(){
+    ctx.regs.c = ctx.regs.l;
+    ctx.cycles += 4;
+}
+
+//4E
+void instr_ld_c_hl(){
+    u16 address = (ctx.regs.h << 8) | ctx.regs.l;
+    ctx.regs.c = bus_read(address);
+    ctx.cycles += 8;
+}
+
+//4F
+void instr_ld_c_a(){
+    ctx.regs.c = ctx.regs.a;
     ctx.cycles += 4;
 }
 

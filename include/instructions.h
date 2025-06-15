@@ -89,7 +89,23 @@ void instr_dec_a();//3D
 void ld_a_d8();//3E
 void instr_ccf();//3F
 
+void instr_ld_b_b();//40
+void instr_ld_b_c();//41
+void instr_ld_b_d();//42
+void instr_ld_b_e();//43
+void instr_ld_b_h();//44
+void instr_ld_b_l();//45
+void instr_ld_b_hl();//46;
 void instr_ld_b_a();//47
+void instr_ld_c_b();//48
+void instr_ld_c_c();//49
+void instr_ld_c_d();//4A
+void instr_ld_c_e();//4B
+void instr_ld_c_h();//4C
+void instr_ld_c_l();//4D
+void instr_ld_c_hl();//4E
+void instr_ld_c_a();//4F
+
 
 void instr_ld_la();//6F
 
