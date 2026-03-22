@@ -1,13 +1,12 @@
 #pragma once
 /*Just macros and what not here*/
 
-
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-typedef uint8_t u8; //shortcuts for bits so we dont type uint8_t all the time
+typedef uint8_t u8; // shortcuts for bits so we dont type uint8_t all the time
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
@@ -18,13 +17,19 @@ typedef uint64_t u64;
 
 #define BETWEEN(a, b, c) ((a >= b) && (a <= c))
 
+#define GET_CARRY ((ctx.regs.f & FLAG_C) ? 1 : 0)
+
 void delay(u32 ms);
 
-#define NO_IMPL { fprintf(stderr, "NOT YET IMPLEMENTED\n");exit(-1);} //macro for stuff that hasnt been implemented yet
+#define NO_IMPL                                                                \
+  {                                                                            \
+    fprintf(stderr, "NOT YET IMPLEMENTED\n");                                  \
+    exit(-1);                                                                  \
+  } // macro for stuff that hasnt been implemented yet
 
 #define FLAG_Z 0x80
 #define FLAG_N 0x40
 #define FLAG_H 0x20
 #define FLAG_C 0x10
 
-typedef int8_t s8; //signed integer
+typedef int8_t s8; // signed integer

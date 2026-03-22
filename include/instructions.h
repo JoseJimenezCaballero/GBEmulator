@@ -140,6 +140,34 @@ void instr_ld_l_l();  // 6D
 void instr_ld_l_hl(); // 6E
 void instr_ld_la();   // 6F
 
+void instr_ld_hl();   // 70-75, 77
+void instr_halt();    // 76
+void instr_ld_ab();   // 78
+void instr_ld_ac();   // 79
+void instr_ld_ad();   // 7A
+void instr_ld_ae();   // 7B
+void instr_ld_ah();   // 7C
+void instr_ld_al();   // 7D
+void instr_ld_a_hl(); // 7E
+void instr_ld_aa();   // 7F
+
+void instr_add_ab();   // 80
+void instr_add_ac();   // 81
+void instr_add_ad();   // 82
+void instr_add_ae();   // 83
+void instr_add_ah();   // 84
+void instr_add_al();   // 85
+void instr_add_a_hl(); // 86
+void instr_add_aa();   // 87
+void instr_adc_ab();   // 88
+void instr_adc_ac();   // 89
+void instr_adc_ad();   // 8A
+void instr_adc_ae();   // 8B
+void instr_adc_ah();   // 8C
+void instr_adc_al();   // 8D
+void instr_adc_a_hl(); // 8E
+void instr_adc_aa();   // 8F
+
 void instr_xor_a(); // AF
 
 void instr_jp_a16();    // C3
