@@ -168,11 +168,44 @@ void instr_adc_al();   // 8D
 void instr_adc_a_hl(); // 8E
 void instr_adc_aa();   // 8F
 
-void instr_xor_a(); // AF
+void instr_sub_ab();   // 90
+void instr_sub_ac();   // 91
+void instr_sub_ad();   // 92
+void instr_sub_ae();   // 93
+void instr_sub_ah();   // 94
+void instr_sub_al();   // 95
+void instr_sub_a_hl(); // 96
+void instr_sub_aa();   // 97
+void instr_sbc_ab();   // 98
+void instr_sbc_ac();   // 99
+void instr_sbc_ad();   // 9A
+void instr_sbc_ae();   // 9B
+void instr_sbc_ah();   // 9C
+void instr_sbc_al();   // 9D
+void instr_sbc_a_hl(); // 9E
+void instr_sbc_aa();   // 9F
+
+void instr_and_ab();   // A0
+void instr_and_ac();   // A1
+void instr_and_ad();   // A2
+void instr_and_ae();   // A3
+void instr_and_ah();   // A4
+void instr_and_al();   // A5
+void instr_and_a_hl(); // A6
+void instr_and_aa();   // A7
+
+void instr_xor_ab();   // A8
+void instr_xor_ac();   // A9
+void instr_xor_ad();   // AA
+void instr_xor_ae();   // AB
+void instr_xor_ah();   // AC
+void instr_xor_al();   // AD
+void instr_xor_a_hl(); // AE
+void instr_xor_a();    // AF
 
 void instr_jp_a16();    // C3
 void instr_prefix_cb(); // CB
-void insr_call_a16();   // CD
+void instr_call_a16();  // CD
 
 void instr_ldh_a8_a(); // E0
 void instr_ld_a16_a(); // EA
