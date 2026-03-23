@@ -198,6 +198,23 @@ void init_instruction_table() {
   instruction_table[0xAE] = instr_xor_a_hl;
   instruction_table[0xAF] = instr_xor_a;
 
+  instruction_table[0xB0] = instr_or_ab;
+  instruction_table[0xB1] = instr_or_ac;
+  instruction_table[0xB2] = instr_or_ad;
+  instruction_table[0xB3] = instr_or_ae;
+  instruction_table[0xB4] = instr_or_ah;
+  instruction_table[0xB5] = instr_or_al;
+  instruction_table[0xB6] = instr_or_a_hl;
+  instruction_table[0xB7] = instr_or_aa;
+  instruction_table[0xB8] = instr_cp_ab;
+  instruction_table[0xB9] = instr_cp_ac;
+  instruction_table[0xBA] = instr_cp_ad;
+  instruction_table[0xBB] = instr_cp_ae;
+  instruction_table[0xBC] = instr_cp_ah;
+  instruction_table[0xBD] = instr_cp_al;
+  instruction_table[0xBE] = instr_cp_a_hl;
+  instruction_table[0xBF] = instr_cp_aa;
+
   instruction_table[0xC3] = instr_jp_a16;
   instruction_table[0xCB] = instr_prefix_cb;
   instruction_table[0xCD] = instr_call_a16;
@@ -2308,6 +2325,232 @@ void instr_xor_a() {
   ctx.regs.a = 0;
   ctx.regs.f = 0; // clear flags like it says in opcode chart
   ctx.regs.f |= FLAG_Z;
+  ctx.cycles += 4;
+}
+
+// B0
+void instr_or_ab() {
+  ctx.regs.a |= ctx.regs.b;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B1
+void instr_or_ac() {
+  ctx.regs.a |= ctx.regs.c;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B2
+void instr_or_ad() {
+  ctx.regs.a |= ctx.regs.d;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B3
+void instr_or_ae() {
+  ctx.regs.a |= ctx.regs.e;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B4
+void instr_or_ah() {
+  ctx.regs.a |= ctx.regs.h;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B5
+void instr_or_al() {
+  ctx.regs.a |= ctx.regs.l;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B6
+void instr_or_a_hl() {
+  u16 address = (ctx.regs.h << 8) | ctx.regs.l;
+  u8 value = bus_read(address);
+
+  ctx.regs.a |= value;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 8;
+}
+
+// B7
+void instr_or_aa() {
+  ctx.regs.a |= ctx.regs.a;
+
+  ctx.regs.f = 0;
+  if (ctx.regs.a == 0)
+    ctx.regs.f |= FLAG_Z;
+
+  ctx.cycles += 4;
+}
+
+// B8
+void instr_cp_ab() {
+  u8 value = ctx.regs.b;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 4;
+}
+
+// B9
+void instr_cp_ac() {
+  u8 value = ctx.regs.c;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 4;
+}
+
+// BA
+void instr_cp_ad() {
+  u8 value = ctx.regs.d;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 4;
+}
+
+// BB
+void instr_cp_ae() {
+  u8 value = ctx.regs.e;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 4;
+}
+
+// BC
+void instr_cp_ah() {
+  u8 value = ctx.regs.h;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 4;
+}
+
+// BD
+void instr_cp_al() {
+  u8 value = ctx.regs.l;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 4;
+}
+
+// BE
+void instr_cp_a_hl() {
+  u16 address = (ctx.regs.h << 8) | ctx.regs.l;
+  u8 value = bus_read(address);
+
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  if ((ctx.regs.a & 0x0F) < (value & 0x0F))
+    ctx.regs.f |= FLAG_H;
+  if (ctx.regs.a < value)
+    ctx.regs.f |= FLAG_C;
+
+  ctx.cycles += 8;
+}
+
+// BF
+void instr_cp_aa() {
+  u8 value = ctx.regs.a;
+  u16 result = ctx.regs.a - value;
+
+  ctx.regs.f = FLAG_N;
+
+  if ((result & 0xFF) == 0)
+    ctx.regs.f |= FLAG_Z;
+  // no borrow → H = 0, C = 0
+
   ctx.cycles += 4;
 }
 

@@ -193,7 +193,6 @@ void instr_and_ah();   // A4
 void instr_and_al();   // A5
 void instr_and_a_hl(); // A6
 void instr_and_aa();   // A7
-
 void instr_xor_ab();   // A8
 void instr_xor_ac();   // A9
 void instr_xor_ad();   // AA
@@ -202,6 +201,23 @@ void instr_xor_ah();   // AC
 void instr_xor_al();   // AD
 void instr_xor_a_hl(); // AE
 void instr_xor_a();    // AF
+
+void instr_or_ab();   // B0
+void instr_or_ac();   // B1
+void instr_or_ad();   // B2
+void instr_or_ae();   // B3
+void instr_or_ah();   // B4
+void instr_or_al();   // B5
+void instr_or_a_hl(); // B6
+void instr_or_aa();   // B7
+void instr_cp_ab();   // B8
+void instr_cp_ac();   // B9
+void instr_cp_ad();   // BA
+void instr_cp_ae();   // BB
+void instr_cp_ah();   // BC
+void instr_cp_al();   // BD
+void instr_cp_a_hl(); // BE
+void instr_cp_aa();   // BF
 
 void instr_jp_a16();    // C3
 void instr_prefix_cb(); // CB
